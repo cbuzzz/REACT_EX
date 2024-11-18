@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-export default function ExperienciaList({ experiencias = [], onDeleteExperience }) { // Recibir onDeleteExperience como prop
+export default function ExperienciaList({ experiencias = [], onDeleteExperience, onEditExperience }) { // Recibir onDeleteExperience como prop
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -26,6 +26,7 @@ export default function ExperienciaList({ experiencias = [], onDeleteExperience 
             <p><strong>Dueño:</strong> {exp.owner}</p>
             <p><strong>Participantes:</strong> {exp.participants.join(', ')}</p>
             <button onClick={() => handleDelete(exp._id)}>Eliminar</button> {/* Botón para eliminar */}
+            <button onClick={() => onEditExperience(exp)}>Editar</button>
           </li>
         ))}
       </ul>

@@ -6,6 +6,7 @@ export default function Experiencias() {
   const [experiencias, setExperiencias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [editingExperience, setEditingExperience] = useState(null);
   const URL = "http://localhost:3000/api/experiencias"
   useEffect(() => {
     setLoading(true);
@@ -25,42 +26,54 @@ export default function Experiencias() {
   }, []);
 
   const handleExperienciaSubmit = async (newExperiencia) => {
-    //Crear experiencia
     try {
-        const response = await fetch(URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newExperiencia),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Error al crear la experiencia');
-        }
-  
-        const data = await response.json();
-        setExperiencias([...experiencias, data]); // Actualiza la lista de experiencias
-      } catch (err) {
-        console.error(err.message);
+      const method = newExperiencia._id ? 'PUT' : 'POST';
+      const endpoint = newExperiencia._id ? `${URL}/${newExperiencia._id}` : URL;
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newExperiencia),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar la experiencia');
       }
+
+      const data = await response.json();
+      if (newExperiencia._id) {
+        setExperiencias((prev) =>
+          prev.map((exp) => (exp._id === data._id ? data : exp))
+        );
+      } else {
+        setExperiencias([...experiencias, data]);
+      }
+
+      setEditingExperience(null);
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
+
+  const handleEditExperience = (newExperiencia) => {
+    setEditingExperience(newExperiencia); // Cargar los datos de la experiencia seleccionada en el formulario
   };
 
   const handleDeleteExperience = async (expId) => {
     // Eliminar experiencia
     try {
-        const response = await fetch(`http://localhost:3000/api/experiencias/${expId}`, {
-          method: 'DELETE',
-        });
-  
-        if (!response.ok) {
-          throw new Error('Error al eliminar la experiencia');
-        }
-  
-        setExperiencias(experiencias.filter(exp => exp._id !== expId)); // Actualiza la lista
-      } catch (err) {
-        console.error(err);
+      const response = await fetch(`${URL}/${expId}`, { method: 'DELETE' });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar la experiencia');
       }
+
+      setExperiencias((prev) => prev.filter((exp) => exp._id !== expId)); // Actualiza la lista
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -70,8 +83,15 @@ export default function Experiencias() {
       {error && <p>Error: {error}</p>}
       {!loading && !error && (
         <>
-          <ExperienciaList experiencias={experiencias} onDeleteExperience={handleDeleteExperience} />
-          <ExperienciaForm onSubmit={handleExperienciaSubmit} />
+          <ExperienciaList
+            experiencias={experiencias}
+            onDeleteExperience={handleDeleteExperience}
+            onEditExperience={handleEditExperience} // Pasar la función de edición a la lista
+          />
+          <ExperienciaForm
+            onSubmit={handleExperienciaSubmit}
+            initialData={editingExperience} // Pasar los datos de edición al formulario
+          />
         </>
       )}
     </div>
